@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<br>
+<br>
+<h1 style="padding-left: 50px;">Help Page</h1>
+
+<p style="padding-left: 90px; padding-right: 90px; padding-top: 20px;">สำหรับการใช้งาน Query ของ MongoDB จำเป็นจะต้องทราบ key Dictionary ที่มีอยู่ในฐานข้อมูล 
+    โดยในหน้านี้จะแสดง key Dictionary ทั้งหมดที่อยู่ในฐานข้อมูลในรูปของตารางด้านล่าง
+<br>หมายเหตุ: ข้อมูลในแต่ละ Run จะไม่มีข้อมูลทุก key Dictionary ดังนั้นควรตั้ง Query ที่ไม่เจาะจงมากเพื่อป้องกันไม่ให้ไดข้อมูลไม่ครบ
+</p>
+<br>
+<div style="margin-left: 70px">
+    <h4> - MongoDB Qeuries</h4>
+    <p style="padding-left: 90px; padding-right: 90px; padding-top: 20px;">สำหรับการใช้ Query MongoDB นอกจากในตัวอย่างแล้วท่านสามารถ
+    ศึกษาเพิ่มเติมได้ที่เว็บของ MongoDB หรือ <a href="https://www.mongodb.com/docs/manual/tutorial/query-documents/">คลิกที่นี่</a></p>
+
+</div>
+<br>
+<div style="margin-left: 70px">
+    <h4> - Key Dictionary in CENMIG DATABASE</h4>
+</div>
+<br>
+<div style="padding-left: 70px;">
+    <table style=" margin-left: auto; margin-right: auto;">
+        <thead><tr><th>key Dictionary</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+         <tr><td>'AMR_genotypes' </td><td>Drug Resistance Gene</td><td>mdsA,mdsB</td></tr>
+         <tr><td>'Assay_Type' </td><td>Assay Type</td><td>WGS</td></tr>
+         <tr><td>'BioProject' </td><td>BioProject Number</td><td>PRJNA186035</td></tr>
+         <tr><td>'BioSample' </td><td>BioSample Number</td><td>SAMN02800587</td></tr>
+         <tr><td>'Center_Name'</td><td>Name of Organization</td><td>CFSAN</td></tr>
+         <tr><td>'Collection_date' </td><td>Date of Collection</td><td>4/14/2014</td></tr>
+         <tr><td>'Experiment' </td><td>Experiment Code</td><td>SRX554405</td></tr>
+         <tr><td>'H1_antigen_prediction(fliC)'</td><td>H1 Antigen Prediction (fliC)</td><td>l,v</td></tr>
+         <tr><td>'H2_antigen_prediction(fljB)' </td><td>H2 Antigen Rediction (fljB)</td><td>1,7</td></tr>
+         <tr><td>'Instrument' </td><td>Instrument name for Sequncing</td><td>Illumina MiSeq</td></tr>
+         <tr><td>'L16' </td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'L19' </td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'L35'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'LibraryLayout' </td><td>Library Layout</td><td>PAIRED</td></tr>
+         <tr><td>'LibrarySelection' </td><td>Library Selection</td><td>RANDOM</td></tr>
+         <tr><td>'LibrarySource' </td><td>Library Source</td><td>GENOMIC</td></tr>
+         <tr><td>'O_antigen_prediction'</td><td>Antigen Prediction</td><td>3,10</td></tr>
+         <tr><td>'Organism' </td><td>Species Name</td><td>Salmonella enterica subsp. enterica serovar Give</td></tr>
+         <tr><td>'Platform' </td><td>Platform Name for Sequencing</td><td>ILLUMINA</td></tr>
+         <tr><td>'Predicted_antigenic_profile'</td><td>Predicted Antigenic Profile</td><td>3,10:l,v:1,7</td></tr>
+         <tr><td>Predicted_identification' </td><td>Predicted Identification</td><td>Salmonella enterica subspecies enterica (subspecies I)</td></tr>
+         <tr><td>'Predicted_serotype' </td><td>Predicted Serotype</td><td>Give</td></tr>
+         <tr><td>Run'</td><td>Number of Run Accession in NCBI (fasq)</td><td>SRR1300600</td></tr>
+         <tr><td>S12'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>S14Z'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>S19'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'S7' </td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'S8' </td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'ST' </td><td>ST number</td><td>516</td></tr>
+         <tr><td>'Sample_Name' </td><td>Sample Name</td><td>CFSAN012622</td></tr>
+         <tr><td>'Serovar' </td><td>Classification by Serotype</td><td>Give</td></tr>
+         <tr><td>'_id' </td><td>MongoDB ID</td><td>628b672a726099529574f22e</td></tr>
+         <tr><td>'ace' </td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'adhP' </td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'arcC' </td><td>Gene Symbol</td><td>84</td></tr>
+         <tr><td>'aroC'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'aroE'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'asm_acc'</td><td>Number of Assembly Accession in NCBI (fasq)</td><td>GCA_000732045.2</td></tr>
+         <tr><td>'atr'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'cenmigID'</td><td>Number of Run Accession in NCBI (fasq)</td><td>SRR1300600</td></tr>
+         <tr><td>'dnaN'</td><td>Gene Symbol</td><td>11</td></tr>
+         <tr><td>'ftp_path'</td><td>FTP path (server path)</td><td>https://ftp.ncbi.nlm.nih.gov<br>/genomes/all/GCA/000/732/045/<br>GCA_000732045.2_ASM73204v2</td></tr>
+         <tr><td>'geo_loc'</td><td>Country Name * Raw form NCBI</td><td>Thailand; Asia</td></tr>
+         <tr><td>'geo_loc_name_country'</td><td>Country Name</td><td>Thailand</td></tr>
+         <tr><td>'geo_loc_name_country_continent'</td><td>Continent Name</td><td>Asia</td></tr>
+         <tr><td>'geo_loc_name_country_fix'</td><td>Country Name (Edit with ISO3 code)</td><td>THAILAND</td></tr>
+         <tr><td>'glcK'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'glnA'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'glpF'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'gltB'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'gmhD'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'gmk'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'hemD'</td><td>Gene Symbol</td><td>16</td></tr>
+         <tr><td>'hisD'</td><td>Gene Symbol</td><td>42</td></tr>
+         <tr><td> 'host'</td><td>Host Species Name</td><td>-</td></tr>
+         <tr><td> 'host_age'</td><td>Host Age</td><td>-</td></tr>
+         <tr><td>'host_disease'</td><td>Host Disease</td><td>missing</td></tr>
+         <tr><td>'host_disease_stage'</td><td>Stage of Disease in Host</td><td>-</td></tr>
+         <tr><td>'host_sex'</td><td>Host Gender</td><td>-</td></tr>
+         <tr><td>'isolation_source'</td><td>Isolation Source</td><td>ground red chili pepper</td></tr>
+         <tr><td>'lat_lon'</td><td>Latitude and Longitude</td><td>missing</td></tr>
+         <tr><td>'lepA'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'lipA'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'narK'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'ndh'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'pheS'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'pta'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'purE'</td><td>Gene Symbol</td><td>40</td></tr>
+         <tr><td>'sdhA'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>sub_region'</td><td>Sub Region</td><td>South-eastern Asia</td></tr>
+         <tr><td>'sucA'</td><td>Gene Symbol</td><td>71</td></tr>
+         <tr><td>'thrA'</td><td>Gene Symbol</td><td>4</td></tr>
+         <tr><td>'tkt'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>'tpi'</td><td>Gene Symbol</td><td>-</td></tr>
+         <tr><td>yqiL'</td><td>Gene Symbol</td><td>-</td></tr>
+        </tbody></table>
+</div>
+<br>
+<br>
+{% endblock %}

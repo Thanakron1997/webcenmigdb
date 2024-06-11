@@ -1,0 +1,172 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    .label_css {
+      
+        margin-bottom: 15px;
+    }
+    input[type=radio] {
+        margin-left: 20px;
+        margin-bottom: 15px;
+        
+    }
+    .center {
+    margin: auto;
+    width: 60%;
+    
+    padding: 10px;
+    }
+    input[type=text]{
+        width: 250px;
+    }
+    .tab {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 20px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+  background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  margin-left: 20px;
+  margin-right: 20px;
+  padding: 6px 12px;
+  border: 2px solid #ccc;
+  border-top: none;
+  height: 370px;
+}
+</style>
+<br>
+<div class="container" style="margin: auto; text-align: center">
+    <h1>CENMIG Database Download Metadata</h1>
+    <h3>Enter Your Query in The Box and Submit</h3>
+</div>
+
+<br>
+<div class="tab" style="margin-left: 20px; margin-right: 20px;">
+    <button class="tablinks" onclick="openCity(event, 'London')" id="defaultOpen">Easy Search</button>
+    <button class="tablinks" onclick="openCity(event, 'Paris')">Advanced Search</button>
+    
+</div>
+  
+<div id="London" class="tabcontent">
+    <h3 style="margin-left: 20px; margin-top: 10px;">Easy Search</h3>
+<div class="center">
+<form action="{{ url_for("download_data")}}" method="post">
+    <p style="margin-bottom: 5px;">Please select your Query:</p>   
+    <input type="radio" id="and" name="query_select" value="and" required>
+    <label for="and">AND</label>
+    <input type="radio" id="none" name="query_select" value="none">
+    <label for="none">None</label><br>
+
+    <label for="lst">Key Dictionary:</label>
+    <select name="lst" id="lst">
+        {% for lst0 in lst %}
+            <option value="{{lst0}}" SELECTED>{{lst0}}</option>
+        {% endfor %}
+        </select>
+    <label for="firstname" class="label_css">:</label>
+    <input type="text" id="firstname" name="fname" placeholder="value" required>
+    <br class="br">
+    <label for="lst2">Key Dictionary:</label>
+    <select name="lst2" id="lst2">
+        {% for lst0 in lst %}
+            <option value="{{lst0}}" SELECTED>{{lst0}}</option>
+        {% endfor %}
+        </select>
+    <label for="firstname2" class="label_css">:</label>
+    <input type="text" id="firstname2" name="fname2" placeholder="value">
+    <br>
+    <label for="lst3">Key Dictionary:</label>
+    <select name="lst3" id="lst3">
+        {% for lst0 in lst %}
+            <option value="{{lst0}}" SELECTED>{{lst0}}</option>
+        {% endfor %}
+        </select>
+    <label for="firstname3" class="label_css">:</label>
+    <input type="text" id="firstname3" name="fname3" placeholder="value">
+    <button type="submit" style="margin-left: 5px;" value="search" name="submitdata">Download Data</button>
+</form>
+</div>            
+</div>
+
+<div id="Paris" class="tabcontent">
+    <h3 style="margin-left: 20px; margin-top: 10px;">Advanced Search</h3>
+    <div class="container" style="margin: auto; text-align: center">
+        <div style="margin: auto; text-align: left; padding-left: 50px; padding-right: 50px;">
+            <p>Example :<br>
+                1. { 'Organism':'Salmonella enterica subsp. enterica serovar Typhimurium'}<br>
+                2. { '$and' : [{ 'geo_loc_name_country_fix': 'THAILAND'},{ 'Organism':{ '$regex' : 'Salmonella enterica.*'}}]}<br>
+                3. { '$and' : [{'ST': '764'},{ 'Organism': 'Staphylococcus aureus'},{ 'sub_region':'South-eastern Asia'}]}<br>
+                4. {'$and': [{ '$or' : [{ 'sub_region': 'South-eastern Asia' },{ 'geo_loc_name_country_fix' : { '$in' : ['CHINA', 'JAPAN' , 'KOREA, REPUBLIC OF']} }] },{ 'Organism': { '$regex' : 'Staphylococcus aureus.*'} }]}
+            </p>
+            <P>
+                For more Information about Key Dictionary please go to <a href="/help">help page</a><br>
+                The result maybe take a long time please waiting....
+            </P>
+            <br>
+        </div>
+        <form method="post">
+            
+            {{ form2.hidden_tag() }}
+            {{form2.fixiblequery.label}}
+            {{form2.fixiblequery(style='width: 600px;')}}
+            {{form2.submit2()}}
+            
+        </form>
+    </div>
+</div>
+<br>
+<div class="container" style="height: 50px;">
+    {% if query_res == 'download' %}
+
+    <a class="btn btn-success" href="{{url_for('download')}}">Download</a>
+    {% elif query_res == 'No Data Found'%}
+    {{query_res}}
+    {% else %}
+
+    {% endif%}
+</div>
+
+
+  
+  <script>
+  function openCity(evt, cityName) {
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+      tabcontent[i].style.display = "none";
+    }
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+      tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+    document.getElementById(cityName).style.display = "block";
+    evt.currentTarget.className += " active";
+  }
+  document.getElementById("defaultOpen").click();
+  </script>
+{% endblock %}
+    

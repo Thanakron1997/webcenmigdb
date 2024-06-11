@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<br>
+<h1 style="padding-left: 20px;">Data Table: Mycobacterium tuberculosis</h1>
+ 
+<div class="container">
+    <table id="example" class="display" width="100%"></table>
+</div>      
+
+
+<script>
+    
+$(document).ready(function () {
+    $('#example').DataTable({
+        data: {{dataSet|tojson}},
+        columns: [
+            { title: 'cenmigID' },
+            { title: 'BioProject' },
+            { title: 'BioSample' },
+            { title: 'Organism' },
+            { title: 'Collection Date' },
+            { title: 'Country' },
+            { title: 'Instrument' },
+        
+        ],
+    });
+}); 
+</script>
+{% endblock %}
+    

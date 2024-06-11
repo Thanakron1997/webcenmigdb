@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<br>
+<div class="container" style="margin: auto; text-align: center">
+    <h1>CENMIG DATABASE : DOWNLOAD SEQUENCES</h1>
+    <h3>Enter Your Query in The Box and Submit</h3>
+    <br>
+    <div style="margin: auto; text-align: left; padding-left: 50px; padding-right: 50px;">
+        
+        <P>
+            The Query like Download Metadata Query, So You Can Use the Same Query at Here.<br>
+            For more Information about Key Dictionary please go to <a href="/help">help page</a><br>
+            The result maybe take a long time please waiting....
+        </P>
+        <br>
+    </div>
+</div>
+<div class="container">
+    <form method="post">
+        
+        {{ form3.hidden_tag() }}
+        {{form3.select_file.label}}
+        {{form3.select_file}}
+        <div class="container" style="margin: auto; text-align: center">
+        {{form3.theQuery.label(style='margin: auto; text-align: center')}}
+        {{form3.theQuery(style='width: 600px; margin: auto; text-align: center')}}
+        {{form3.submit3()}}
+        </div>
+    </form>
+</div>
+    <hr>
+    <div class="container" style="height: 200px;">
+        <!-- {{query_res2}} -->
+        {% if query_res2 == 'download' %}
+        
+        <a class="btn btn-success" href="{{url_for('download_sequences_sra')}}">Download Sequences</a>
+        {% elif query_res2 == 'No Data Found'%}
+        {{query_res2}}
+
+        {% elif query_res2 == 'none'%}
+        <p>Please Select file type</p>
+        {% else %}
+    
+        {% endif%}    
+    </div>
+    
+    {% endblock %}

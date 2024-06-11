@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<br>
+<div class="container" style="margin: auto; text-align: center">
+    <h1>CENMIG Database Search</h1>
+    <h3>Enter CenmigID in The Box and Submit</h3>
+    <br>
+    <form method="post">
+        
+        {{ form.hidden_tag() }}
+        {{form.name.label}}
+        {{form.name(style='width: 400px;')}}
+        {{form.submit()}}
+        
+    </form>
+</div>
+    <hr>
+    <div class="container" style="height: 500px;">
+        {% if fname %}
+        <p>Result: {{fname}}</p>
+        {% else %}
+        {% endif%}    
+    </div>
+    
+    {% endblock %}
