@@ -3,6 +3,15 @@ import os
 import shutil
 import re
 from datetime import datetime 
+from concurrent.futures import ProcessPoolExecutor
+
+def query_to_dict(input_str):
+    pairs = input_str.split('&')
+    result_dict = {}
+    for pair in pairs:
+        key, value = pair.split('=')
+        result_dict[key.strip()] = value.strip().replace("'", "")
+    return result_dict
 
 def copy_file(file_name_sra, path_new):
     file_name_only = os.path.basename(file_name_sra)
@@ -55,140 +64,118 @@ def dashboard_data(dquery):
     except:
         df_except = pd.DataFrame({'Fields': ['Not Found'], 'No Data': [0], 'Contains Data' : [0]})
         table_html = df_except.to_html(classes='table table-striped',index=False)
-    
     # Count total record
     try:
         total_record = format(df.shape[0], ',')
     except:
         total_record = 0
-    
-    # try add ISO code
     try:
         ungeo_df = pd.read_parquet('UNGEO.parquet',columns=['Country','ISO-alpha2 Code','Sub-region Name'])
         df = pd.merge(df, ungeo_df, how = 'left', left_on='geo_loc_name_country_fix', right_on = 'Country', indicator = False)
     except:
         pass
-    
     try:
         df['Collection_date'] = df['Collection_date'].apply(process_date)
         df = df[['Organism','Collection_date','sub_region','ST','host','ISO-alpha2 Code']]
     except:
         pass
     df_new = df.fillna('No Data')
-    # Test count country code 2
+    results = run_all_counts(df_new)
+    t_dict_country, top_ten_years_sort, organism_data, lst_key_dict_region, lst_val_region_limit, lst_key_dict_host, lst_val_host_limit = results
+
+    return total_record,t_dict_country, top_ten_years_sort,organism_data,lst_key_dict_region,lst_val_region_limit,lst_key_dict_host,lst_val_host_limit, table_html
+
+def run_all_counts(df):
+    with ProcessPoolExecutor() as executor:
+        # Submit tasks
+        future_country = executor.submit(count_countries, df)
+        future_years = executor.submit(count_years, df)
+        future_organism = executor.submit(count_organism, df)
+        future_region = executor.submit(count_region, df)
+        future_host = executor.submit(count_host, df)
+
+        # Get results
+        t_dict_country = future_country.result()
+        top_ten_years_sort = future_years.result()
+        organism_data = future_organism.result()
+        lst_key_dict_region, lst_val_region_limit = future_region.result()
+        lst_key_dict_host, lst_val_host_limit = future_host.result()
+
+    return (t_dict_country, top_ten_years_sort, organism_data,
+            lst_key_dict_region, lst_val_region_limit,
+            lst_key_dict_host, lst_val_host_limit)
+
+def count_countries(df):
     try:
-        test = df_new['ISO-alpha2 Code'].value_counts()
+        test = df['ISO-alpha2 Code'].value_counts()
         t_dict_country = test.to_dict()
     except:
         t_dict_country = {}
-    # count years date
+    return t_dict_country
 
+def count_years(df):
+    # count years date
     try:
-        # df_new['Collection_date'] = df_new['Collection_date'].astype(str)
-        df_collect_date = df_new['Collection_date'].value_counts()
+        df_collect_date = df['Collection_date'].value_counts()
         dict_collect_date = df_collect_date.to_dict()
         current_year = datetime.now().year
         last_ten_year = list(range((current_year-10),(current_year + 1)))
         selected_data_years = {key: dict_collect_date.get(key, 0) for key in last_ten_year}
-        
-
         top_ten_years = [{'year': k, 'count': v} for k, v in sorted(selected_data_years.items(), key=lambda item: item[1], reverse=True)]
         top_ten_years_sort = sorted(top_ten_years, key=lambda x: int(x['year']),reverse=True)
     except:
         top_ten_years_sort = []
+    return top_ten_years_sort
 
+def count_organism(df):
     # Organism count report
     try:
-        df_new['Organism'] = df_new['Organism'].replace('Salmonella.*', 'Salmonella enterica',regex=True)
-        df_new['Organism'] = df_new['Organism'].replace('Mycobacterium.*', 'Mycobacterium tuberculosis',regex=True)
-        df_new['Organism'] = df_new['Organism'].replace('Staphylococcus.*', 'Staphylococcus aureus',regex=True)
-        df_new['Organism'] = df_new['Organism'].replace('Streptococcus agalactiae.*', 'Streptococcus agalactiae',regex=True)
-        test3 = df_new['Organism'].value_counts()
+        df['Organism'] = df['Organism'].replace(to_replace=r'(Salmonella enterica|Mycobacterium tuberculosis|Staphylococcus aureus|Streptococcus agalactiae|Salmonella sp.).*', value=r'\1', regex=True)
+        test3 = df['Organism'].value_counts()
         t3_dict = test3.to_dict()
         organism_data = [{'Organism': k, 'count': v} for k, v in sorted(t3_dict.items(), key=lambda item: item[1], reverse=True)]
     except:
         organism_data = []
+    return organism_data
 
-    # sub_region count report
+def count_region(df):
+    '''sub_region count report'''
     try:
-        test4 = df_new['sub_region'].value_counts()
-        t4_dict = test4.to_dict()
-        lst_val_region = list(t4_dict.values())
-        if len(lst_val_region) > 9:
-            lst_key_dict_region = []
-            count_i_region =0
-            for i in t4_dict:
-                lst_key_dict_region.append(i)
-                count_i_region += 1
-                if count_i_region == 9:
-                    break
-            lst_key_dict_region.append("Other")
-            lst_val_region_limit = lst_val_region[:9]
-            lst_val_region_limit.append(sum(lst_val_region[9:]))
+        sub_region_data = df['sub_region'].value_counts()
+        counts_dict = sub_region_data.to_dict()
+        values = list(counts_dict.values())
+        if len(values) > 8:
+            keys = list(counts_dict.keys())[:9]
+            keys.append("Other")
+            values_limited = values[:9]
+            values_limited.append(sum(values[9:]))
         else:
-            lst_key_dict_region = []
-            for i in t4_dict:
-                lst_key_dict_region.append(i)
-            lst_val_region_limit = lst_val_region
+            keys = list(counts_dict.keys())
+            values_limited = values 
     except:
-        lst_key_dict_region = []
-        lst_val_region_limit = []
+        keys = []
+        values_limited = []
+    return keys, values_limited
 
-    # host type count report
+def count_host(df):
     try:
-        re_na_host = df_new['host'].replace({'missing':'No Data',' missing':'No Data','Human, Homo sapiens':'Homo sapiens','homo sapien':'Homo sapiens',
-                                        'Homo_sapiens':'Homo sapiens','Homo sapiens sapiens':'Homo sapiens','not applicable':'Not available', ' No Data': 'No Data'},regex=True)
-        test5 = re_na_host.value_counts()
-        t5_dict = test5.to_dict()
-        lst_val_host = list(t5_dict.values())
-        if len(lst_val_host) > 8:
-            lst_key_dict_host = []
-            count_i_host = 0
-            for i in t5_dict:
-                lst_key_dict_host.append(i)
-                count_i_host += 1
-                if count_i_host == 8:
-                    break
-            lst_key_dict_host.append("Other")
-            lst_val_host_limit = lst_val_host[:8]
-            lst_val_host_limit.append(sum(lst_val_host[8:]))
+        re_na_host = df['host'].replace({'missing':'No Data',' missing':'No Data','Human, Homo sapiens':'Homo sapiens','homo sapien':'Homo sapiens','Homo_sapiens':'Homo sapiens','Homo sapiens sapiens':'Homo sapiens','not applicable':'Not available', ' No Data': 'No Data','':'No Data','No Data ':'No Data'},regex=True)
+        re_na_host = re_na_host.replace(r'\s*No Data\s*', 'No Data', regex=True)
+        counts = re_na_host.value_counts()
+        counts_dict = counts.to_dict()
+        values = list(counts_dict.values())
+        if len(values) > 7:
+            keys = list(counts_dict.keys())[:8]
+            keys.append("Other")
+            values_limited = values[:8]
+            values_limited.append(sum(values[8:]))
         else:
-            lst_key_dict_host = []
-            for i in t5_dict:
-                lst_key_dict_host.append(i)
-            lst_val_host_limit = lst_val_host
+            keys = list(counts_dict.keys())
+            values_limited = values    
     except:
-        lst_key_dict_host = []
-        lst_val_host_limit = []
-
-    # count st type
-    try:
-        df_new['ST'] = df_new['ST'].apply(convert_to_int)
-        df_new['ST'] = df_new['ST'].astype(str)
-        test6 = df_new['ST'].value_counts()
-        t6_dict = test6.to_dict()
-        lst_val_st = list(t6_dict.values())
-        if len(lst_val_st) > 9:
-            lst_key_dict_st = []
-            count_i_st = 0
-            for i in t6_dict:
-                lst_key_dict_st.append(i)
-                count_i_st += 1
-                if count_i_st == 10:
-                    break
-            lst_key_dict_st.append("Other")
-            lst_val_st_limit = lst_val_st[:10]
-            lst_val_st_limit.append(sum(lst_val_st[10:]))
-        else:
-            lst_key_dict_st = []
-            for i in t6_dict:
-                lst_key_dict_st.append(i)
-            lst_val_st_limit = lst_val_st
-    except:
-        lst_key_dict_st = []
-        lst_val_st_limit = []
-
-    return total_record,t_dict_country, top_ten_years_sort,organism_data,lst_key_dict_region,lst_val_region_limit,lst_key_dict_host,lst_val_host_limit,lst_key_dict_st,lst_val_st_limit, table_html
+        keys = []
+        values_limited = []
+    return keys, values_limited
 
 def count_seq(query_for_seq):
     df_seq = pd.DataFrame.from_dict(query_for_seq)
@@ -202,8 +189,6 @@ def count_seq(query_for_seq):
 
 def find_values_with_test(name_id,txtfiles_raw_seq_path):
     return [value for value in txtfiles_raw_seq_path if name_id in value]
-
-
 
 def process_organism_data(df, column_name):
     counts = df[column_name].value_counts()
@@ -234,10 +219,18 @@ def count_st_lineage(mycol, query_dashboard):
     for organism in lst_organism:
         df_organism = df[df['Organism'] == organism]
         if organism == 'Mycobacterium tuberculosis':
-            keys, values = process_organism_data(df_organism, 'wg_snp_lineage_assignment')
+            try:
+                keys, values = process_organism_data(df_organism, 'wg_snp_lineage_assignment')
+            except:
+                keys = []
+                values = []
         else:
-            df_organism.loc[:, 'ST'] = df_organism['ST'].fillna('No_data')
-            df_organism.loc[:, 'ST'] = df_organism['ST'].apply(lambda x: int(x) if isinstance(x, float) else x).astype(str)
-            keys, values = process_organism_data(df_organism, 'ST')
+            try:
+                df_organism.loc[:, 'ST'] = df_organism['ST'].fillna('No_data')
+                df_organism.loc[:, 'ST'] = df_organism['ST'].apply(lambda x: int(x) if isinstance(x, float) else x).astype(str)
+                keys, values = process_organism_data(df_organism, 'ST')
+            except:
+                keys = []
+                values = []
         results[organism] = {'keys': keys, 'values': values}
     return results

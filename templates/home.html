@@ -30,6 +30,53 @@
     th {
       background-color: #f2f2f2;
     }
+
+    /* Slideshow container */
+.slideshow-container {
+  max-width: 330px;
+  position: relative;
+  margin: auto;
+}
+
+
+/* Position the "next button" to the right */
+.next {
+    /* padding-right: 1px; */
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+/* On hover, add a black background color with a little bit see-through */
+.prev:hover, .next:hover {
+  background-color: rgba(0,0,0,0.8);
+}
+
+/* The dots/bullets/indicators */
+.dot {
+  cursor: pointer;
+  height: 7px;
+  width: 7px;
+  margin: 0 2px;
+  background-color: #bbb;
+  border-radius: 50%;
+  display: inline-block;
+  transition: background-color 0.6s ease;
+}
+
+.active_slide, .dot:hover {
+  background-color: #717171;
+}
+
+/* Fading animation */
+.fade {
+  animation-name: fade;
+  animation-duration: 1.5s;
+}
+
+@keyframes fade {
+  from {opacity: .4} 
+  to {opacity: 1}
+}
     </style>
     <link rel="stylesheet"
           type="text/css"
@@ -72,10 +119,10 @@
       <div class="row" style="max-height: 600px;">
         <div class="col-7" style="width: 65%;">
           <h4 style="text-align: center; font-weight: bold;">The Geo Chart of Record Data</h4>
-          <div id="world-map" style="height: 100%;max-height: 500px;"></div>
+          <div id="world-map" style="height: 100%;max-height: 450px;"></div>
         </div>
         <div class="col-5" style="width: 35%;">
-          <div class="row">
+          <div class="row" style="margin-top: 20px;">
             <div class="col-12">
               <canvas id="myChart_his_date" style="width:100%;max-height: 300px;"></canvas>
             </div>
@@ -98,7 +145,36 @@
       <div class="row" style="max-height: 600px;padding-top: 20px;">
         <div class="col-1" style="width: 10%"></div>
         <div class="col-5" style="width: 40%;">
-          <canvas id="myChart_bar_st" style="width:100%; height: 350px;"></canvas>
+          <div class="slideshow-container">
+            <div class="mySlides">
+                <canvas id="st1" style="width:100%; height: 300px;"></canvas>
+            </div>
+            <div class="mySlides">
+                <canvas id="linage_mycobacterium" style="width:100%; height: 300px;"></canvas>
+            </div>
+            <div class="mySlides">
+              <canvas id="st_staphylococcus" style="width:100%; height: 300px;"></canvas>
+            </div>
+            <div class="mySlides">
+              <canvas id="st_streptococcus" style="width:100%; height: 300px;"></canvas>
+            </div>
+            <div class="mySlides">
+              <canvas id="st_burkholderia" style="width:100%; height: 300px;"></canvas>
+            </div>
+            <div class="mySlides">
+              <canvas id="st_candida" style="width:100%; height: 300px;"></canvas>
+            </div>
+        </div>
+        <div style="text-align:center">
+            <span class="dot" onclick="currentSlide(1)"></span> 
+            <span class="dot" onclick="currentSlide(2)"></span> 
+            <span class="dot" onclick="currentSlide(3)"></span>
+            <span class="dot" onclick="currentSlide(4)"></span>
+            <span class="dot" onclick="currentSlide(5)"></span>
+            <span class="dot" onclick="currentSlide(6)"></span>
+
+            
+        </div>        
         </div>
         <div class="col-5" style="width: 40%;">
           <h4 style="text-align: center;font-weight: bold;">No Data Table</h4>
@@ -108,18 +184,38 @@
       </div>
     </div>
     <br>
+    
     <script>
   var testdata = {{ json_string|safe }}
   console.log(testdata)
+  const bacteriaList = [
+    "Salmonella enterica",
+    "Mycobacterium tuberculosis",
+    "Staphylococcus aureus",
+    "Streptococcus agalactiae",
+    "Campylobacter jejuni",
+    "Burkholderia pseudomallei",
+    "Candida glabrata"
+];
+const defaultEntry = {
+    keys: ["no data"],
+    values: [1]
+};
+bacteriaList.forEach(bacterium => {
+    if (!testdata.hasOwnProperty(bacterium)) {
+        testdata[bacterium] = { ...defaultEntry };
+    }
+});
   var gdpData = {{ t_dict_country|tojson }}
   var data = {{newlist_years|tojson}};
   var xValues_bar_region = {{lst_key_dict_region|tojson}};
   var yValues_bar_region = {{lst_val_region_limit|tojson}};
   var data_organ = {{organism_data|tojson}};
-  var xValues_bar_st = {{lst_key_dict_st|tojson}};
-  var yValues_bar_st = {{lst_val_st_limit|tojson}};
+
   var xValues_pie_host = {{lst_key_dict_host|tojson}};
+  console.log(xValues_pie_host)
   var yValues_pie_host = {{lst_val_host_limit|tojson}};
+  console.log(yValues_pie_host)
     </script>
     <script src="{{url_for('static', filename='home_js.js')}}"></script>
     <script>

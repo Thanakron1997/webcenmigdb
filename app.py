@@ -1,26 +1,13 @@
-from flask import Flask,render_template,send_file,redirect,url_for,request
+from flask import Flask,render_template,make_response,jsonify, request,send_file
 from flask_wtf import FlaskForm
 from wtforms import TextField,SubmitField,RadioField
-
-import pymongo
 import pandas as pd
 import ast
-import os
-import glob
-import shutil
-import re
-from datetime import datetime 
-import multiprocessing
-from function.web_cenmig import convert_to_int,copy_file,count_seq,add_commas,process_date,dashboard_data,find_values_with_test,count_st_lineage
+from function.web_cenmig import count_seq,dashboard_data,count_st_lineage
+from function.api import get_item_from_db,generate_zip
+from function.connect import connect_mongodb
 import json
-
-def connect_mongodb():
-    client = pymongo.MongoClient(
-        host = os.getenv('MONGODB_HOST'), # <-- IP and port go here
-        username=os.getenv('MONGODB_USER'),
-        password=os.getenv('MONGODB_PWD'),
-    )
-    return client
+from io import BytesIO
 
 client = connect_mongodb()
 db = client['metadata']
@@ -55,10 +42,10 @@ def dashboard():
     dquery = mycol.find({}, {'_id': 0,'Collection_date': 1, 'geo_loc_name_country_fix': 1,'Organism': 1, 'host': 1,'sub_region':1,'ST':1})
     query_for_seq = mycol.find(query_dashboard, {'_id': 0,'Run': 1, 'asm_acc': 1})
     raw_read_value, assembly_value = count_seq(query_for_seq)
-    total_record,t_dict_country,top_ten_years_sort,organism_data,lst_key_dict_region,lst_val_region_limit,lst_key_dict_host,lst_val_host_limit,lst_key_dict_st,lst_val_st_limit, table_html= dashboard_data(dquery)
-    results = count_st_lineage(mycol, {})
+    total_record,t_dict_country,top_ten_years_sort,organism_data,lst_key_dict_region,lst_val_region_limit,lst_key_dict_host,lst_val_host_limit, table_html= dashboard_data(dquery)
+    results_st_ = count_st_lineage(mycol, {})
     # Convert person dictionary to JSON
-    json_string = json.dumps(results, indent=4) 
+    json_string = json.dumps(results_st_, indent=4) 
     if form3.validate_on_submit():
         if form3.query_dash.data != '':
             try:
@@ -66,7 +53,9 @@ def dashboard():
                 dquery = mycol.find(query_dashboard, {'_id': 0,'Collection_date': 1, 'geo_loc_name_country_fix': 1,'Organism': 1, 'host': 1,'sub_region':1,'ST':1})
                 query_for_seq = mycol.find(query_dashboard, {'_id': 0,'Run': 1, 'asm_acc': 1})
                 raw_read_value, assembly_value = count_seq(query_for_seq)
-                total_record,t_dict_country,top_ten_years_sort,organism_data,lst_key_dict_region,lst_val_region_limit,lst_key_dict_host,lst_val_host_limit,lst_key_dict_st,lst_val_st_limit, table_html= dashboard_data(dquery)
+                total_record,t_dict_country,top_ten_years_sort,organism_data,lst_key_dict_region,lst_val_region_limit,lst_key_dict_host,lst_val_host_limit, table_html= dashboard_data(dquery)
+                results_st_ = count_st_lineage(mycol, query_dashboard)
+                json_string = json.dumps(results_st_, indent=4) 
             except:
                 total_record = 0
                 raw_read_value =0
@@ -78,230 +67,46 @@ def dashboard():
                 lst_val_region_limit = []
                 lst_key_dict_host = []
                 lst_val_host_limit = []
-                lst_key_dict_st = []
-                lst_val_st_limit = []
-                df = df = pd.DataFrame({'Fields': ['Not Found'], 'No Data': [0], 'Contains Data' : [0]})
+                df = pd.DataFrame({'Fields': ['Not Found'], 'No Data': [0], 'Contains Data' : [0]})
                 table_html = df.to_html(classes='table table-striped',index=False)
+                json_string = json.dumps({}, indent=4) 
         else:
             dquery = mycol.find({}, {'_id': 0,'Collection_date': 1, 'geo_loc_name_country_fix': 1,'Organism': 1, 'host': 1,'host_sex': 1,'sub_region':1,'ST':1})
             query_for_seq = mycol.find(query_dashboard, {'_id': 0,'Run': 1, 'asm_acc': 1})
             raw_read_value, assembly_value = count_seq(query_for_seq)
-            total_record,t_dict_country,top_ten_years_sort,organism_data,lst_key_dict_region,lst_val_region_limit,lst_key_dict_host,lst_val_host_limit,lst_key_dict_st,lst_val_st_limit,table_html = dashboard_data(dquery)
-    return render_template("home.html", form3 = form3, total_record_data = total_record,t_dict_country = t_dict_country, newlist_years = top_ten_years_sort,organism_data = organism_data,
-                           lst_key_dict_region = lst_key_dict_region,lst_val_region_limit = lst_val_region_limit,lst_key_dict_host = lst_key_dict_host,lst_val_host_limit = lst_val_host_limit,
-                           lst_key_dict_st = lst_key_dict_st,lst_val_st_limit = lst_val_st_limit, table = table_html, raw_read_value = raw_read_value, assembly_value =assembly_value,json_string = json_string)
+            total_record,t_dict_country,top_ten_years_sort,organism_data,lst_key_dict_region,lst_val_region_limit,lst_key_dict_host,lst_val_host_limit,table_html = dashboard_data(dquery)
+            results_st_ = count_st_lineage(mycol, query_dashboard)
+            json_string = json.dumps(results_st_, indent=4) 
+    return render_template("home.html", form3 = form3, total_record_data = total_record,t_dict_country = t_dict_country, newlist_years = top_ten_years_sort,organism_data = organism_data,lst_key_dict_region = lst_key_dict_region,lst_val_region_limit = lst_val_region_limit,lst_key_dict_host = lst_key_dict_host,lst_val_host_limit = lst_val_host_limit, table = table_html, raw_read_value = raw_read_value, assembly_value =assembly_value,json_string = json_string)
     
 @app.route('/help')
 def help():
     return render_template("help.html")
 
-@app.route('/search', methods=['GET','POST'])
-def search():
-    res = False
-    form = MyForm()
-    if form.validate_on_submit():
-        name = str(form.name.data)
-        myquery = {"cenmigID" : name}
-        #   myquery = {"cenmigID" : "11-1T@Mahidol@Submitdate19052022"}
-        res = mycol.find(myquery, {'_id': 0}) 
-        res = list(res)
-        if len(res) == 0:
-            res = 'No Data Found'
-        form.name.data = ''
-    return render_template("search.html", fname=res, form=form)
-
 @app.route('/download_Data', methods=['GET','POST'])
 def download_data():
     query_res = False
     form2 = Formfixible()
-
     if form2.validate_on_submit():
         if form2.fixiblequery.data != '':
             try:
-                
                 query1 = ast.literal_eval(form2.fixiblequery.data)
                 query_data = mycol.find(query1, {'_id': 0})
                 df = pd.DataFrame.from_dict(query_data)
-                name_file = 'File_Result_{}.csv'.format(datetime.now().strftime("%Y-%m-%d %H%M%S"))
+                csv = df.to_csv(index=False)
                 # name_file = 'File_Result_{}.csv'.format(pd.datetime.now().strftime("%Y-%m-%d %H%M%S"))
-                df.to_csv(name_file, index = False, header=True)
                 query_res = 'download'      
-                
             except:
                 query_res = 'No Data Found'
             if query_res == 'download':
-                return redirect(url_for('download', name_file = name_file))
+                response = make_response(csv)
+                response.headers['Content-Disposition'] = 'attachment; filename=data.csv'
+                response.headers['Content-Type'] = 'text/csv'
+                return response
         else:
             query_res = 'No Data Found'
         form2.fixiblequery.data = ''
-            
     return render_template("download_data.html",form2 = form2, query_res = query_res)
-
-@app.route('/download_sequences', methods=['GET','POST'])
-def download_sequences():
-    query_res2 = False
-    form3 = DownloadSequences()
-    path_home = os.path.dirname(os.getcwd())  
-    path_raw_sequence_file = path_home + '/New_cenmigDB/sequences_data/*/raw_sequences/*.gz'
-    path_assembly_file = path_home + '/New_cenmigDB/sequences_data/*/Assembly/*.fna.gz'
-    parent_dir = path_home + "/web_data/"
-    if form3.validate_on_submit():
-        if form3.select_file.data == "Raw-Sequences-Only":
-            # for file in glob.glob(path_raw_sequence_file):
-            #     txtfiles_sra_path.append(file)
-            if form3.theQuery.data != '':
-                try:
-                    query2 = ast.literal_eval(form3.theQuery.data)
-                    query_data2 = mycol.find(query2, {'_id': 0,'cenmigID': 1})
-                    txtfiles_raw_seq_path = []
-                    query_path = []
-                    for file in glob.glob(path_raw_sequence_file):
-                        txtfiles_raw_seq_path.append(file)
-                    for data_i in query_data2:
-                        data_sra = data_i.get('cenmigID','NA')
-                        if "In-House:" in data_sra:
-                            inhouse_name = data_sra.split(":")[1]
-                            list_inhouse_file = find_values_with_test(inhouse_name,txtfiles_raw_seq_path)
-                            if len(list_inhouse_file) > 0:
-                                for file_in_i in list_inhouse_file:
-                                    query_path.append(file_in_i)
-                        else:
-                            for raw_i in txtfiles_raw_seq_path:
-                                file_name = os.path.basename(raw_i)
-                                file_name = file_name.rsplit('.',2)[0]
-                                file_name = file_name.replace('_1','')
-                                file_name = file_name.replace('_2','')   
-                                if file_name == data_sra:
-                                    query_path.append(raw_i)
-                    if len(query_path) == 0:
-                        query_res2 = 'No Data Found'
-                    else:
-                        directory = "Result-"+ datetime.now().strftime("%Y-%m-%d %H%M%S")
-                        path_new = os.path.join(parent_dir, directory)
-                        os.mkdir(path_new) 
-                        with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-                            results = [pool.apply_async(copy_file, args=(file_name_sra, path_new)) for file_name_sra in query_path]
-                            [result.get() for result in results]
-                        shutil.make_archive(os.path.join(parent_dir, directory), 'zip', root_dir=path_new)
-                        query_res2 = 'download'                
-                except:
-                    query_res2 = 'No Data Found'
-                if query_res2 == 'download':
-                    name_file2 = directory+".zip"
-                    return redirect(url_for('download_sequences_sra', name_file2 = name_file2))
-            else:
-                query_res2 = 'No Data Found'
-                
-        elif form3.select_file.data == "All-Type":
-            if form3.theQuery.data != '':
-                try:
-                    query2 = ast.literal_eval(form3.theQuery.data)
-                    query_data2 = mycol.find(query2, {'_id': 0,'cenmigID': 1,'asm_acc': 1})
-                    txtfiles_raw_seq_path = []
-                    query_path = []
-                    for file in glob.glob(path_raw_sequence_file):
-                        txtfiles_raw_seq_path.append(file)
-                    for data_i in query_data2:
-                        data_sra = data_i.get('cenmigID','NA')
-                        if "In-House:" in data_sra:
-                            inhouse_name = data_sra.split(":")[1]
-                            list_inhouse_file = find_values_with_test(inhouse_name,txtfiles_raw_seq_path)
-                            if len(list_inhouse_file) > 0:
-                                for file_in_i in list_inhouse_file:
-                                    query_path.append(file_in_i)
-                        else:
-                            for raw_i in txtfiles_raw_seq_path:
-                                file_name = os.path.basename(raw_i)
-                                file_name = file_name.rsplit('.',2)[0]
-                                file_name = file_name.replace('_1','')
-                                file_name = file_name.replace('_2','')   
-                                if file_name == data_sra:
-                                    query_path.append(raw_i)
-                    
-                    txtfiles_assembly_path = []
-                    for file in glob.glob(path_assembly_file):
-                        txtfiles_assembly_path.append(file)
-                    for data_ass_i in query_data2:
-                        data_assembly_i = data_ass_i.get('asm_acc','NA')
-                        for assembly_i in txtfiles_assembly_path:
-                            file_name_ass_i = os.path.basename(assembly_i)
-                            file_name_ass_i = file_name_ass_i.rsplit('.',2)[0]
-                            if str(file_name_ass_i) == str(data_assembly_i):
-                                query_path.append(assembly_i)
-                    if len(query_path) == 0:
-                        query_res2 = 'No Data Found'
-                    else:
-                        directory = "Result-"+ datetime.now().strftime("%Y-%m-%d %H%M%S")
-                        path_new = os.path.join(parent_dir, directory)
-                        os.mkdir(path_new) 
-                        with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-                            results = [pool.apply_async(copy_file, args=(file_name_sra, path_new)) for file_name_sra in query_path]
-                            [result.get() for result in results]
-                        shutil.make_archive(os.path.join(parent_dir, directory), 'zip', root_dir=path_new)
-                    query_res2 = 'download'                
-                except:
-                    query_res2 = 'No Data Found'
-                if query_res2 == 'download':
-                    name_file2 = directory+".zip"
-                    return redirect(url_for('download_sequences_sra', name_file2 = name_file2))
-            else:
-                query_res2 = 'No Data Found'
-
-        elif form3.select_file.data == "Assembly-Only" :
-            # for file in glob.glob(path_raw_sequence_file):
-            #     txtfiles_sra_path.append(file)
-            if form3.theQuery.data != '':
-                try:
-                    query2 = ast.literal_eval(form3.theQuery.data)
-                    query_data2 = mycol.find(query2, {'_id': 0,'asm_acc': 1})
-                    txtfiles_assembly_path = []
-                    query_path_assembly = []
-                    for file in glob.glob(path_assembly_file):
-                        txtfiles_assembly_path.append(file)
-                    # print(txtfiles_assembly_path)
-
-                    for data_i in query_data2:
-                        data_assembly_i = data_i.get('asm_acc','NA')
-                        # print(data_assembly_i)
-                        for assembly_i in txtfiles_assembly_path:
-                            file_name = os.path.basename(assembly_i)
-                            file_name = file_name.rsplit('.',2)[0]
-                            # print(file_name)
-                            if str(file_name) == str(data_assembly_i):
-                                query_path_assembly.append(assembly_i)
-                    if not query_path_assembly:
-                        query_res2 = 'No Data Found'
-                    else:
-                        directory = "Result-"+ datetime.now().strftime("%Y-%m-%d %H%M%S")
-                        path_new = os.path.join(parent_dir, directory)
-                        os.mkdir(path_new) 
-                        with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-                            results = [pool.apply_async(copy_file, args=(file_name_assembly_i, path_new)) for file_name_assembly_i in query_path_assembly]
-                            [result.get() for result in results]
-                        shutil.make_archive(os.path.join(parent_dir, directory), 'zip', root_dir=path_new)
-                        query_res2 = 'download'                
-                except:
-                    query_res2 = 'No Data Found'
-                if query_res2 == 'download':
-                    name_file2 = directory+".zip"
-                    return redirect(url_for('download_sequences_sra', name_file2 = name_file2))
-            else:
-                query_res2 = 'No Data Found'
-        else:
-            query_res2 = 'none'
-        
-        form3.theQuery.data = ''
-    return render_template("download_sequences.html",form3 = form3, query_res2 = query_res2)
-
-@app.route('/download_sequences_sra/<path:name_file2>')
-def download_sequences_sra(name_file2):
-    path = name_file2
-    return send_file(path, as_attachment=True)
-
-@app.route('/download/<path:name_file>')
-def download(name_file):
-    path = name_file    
-    return send_file(path, as_attachment=True)
 
 @app.route('/bac_tb')
 def bac_tb():
@@ -310,26 +115,6 @@ def bac_tb():
     df = pd.DataFrame.from_dict(dquery)
     df.fillna('No Data', inplace=True)
     data_list = df.values.tolist()
-    # list_order = ['cenmigID','BioProject','BioSample','Organism','Collection_date','geo_loc_name_country_fix','Instrument']
-    # ary = []
-    # myquery = {'Organism' : { "$regex": "^Mycobacterium" }}
-    # dquery = mycol.find(myquery, {'_id': 0,'BioProject': 1, 'BioSample': 1,'Collection_date': 1, 'geo_loc_name_country_fix': 1,'Instrument': 1,'Organism': 1, 'cenmigID': 1})
-    # for x in dquery:
-    #     if 'BioProject' not in x:
-    #         x.update({'BioProject': 'NA'})
-    #     if 'BioSample' not in x:
-    #         x.update({'BioSample': 'NA'})
-    #     if 'Organism' not in x:
-    #         x.update({'Organism': 'NA'})
-    #     if 'Collection_date' not in x:
-    #         x.update({'Collection_date': 'NA'})
-    #     if 'geo_loc_name_country_fix' not in x:
-    #         x.update({'geo_loc_name_country_fix': 'NA'})
-    #     if 'Instrument' not in x:
-    #         x.update({'Instrument': 'NA'})
-    #     x = {k: x[k] for k in list_order}  
-    #     y = list(x.values())
-    #     ary.append(y)
     return render_template("bac_tb.html",dataSet = data_list)
 
 @app.route('/bac_salmo_subsp')
@@ -368,6 +153,178 @@ def bac_strep():
     data_bac_strep = df.values.tolist()
     return render_template("bac_strep.html",data_strep = data_bac_strep)
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0',debug=True)
+@app.route('/api/metadata/search', methods=['GET'])
+def get_data():
+    query_params = dict(request.args)
+    list_query = list(query_params.keys())
+    print(query_params)
+    if len(list_query) <= 1:
+        pipeline = [
+            { '$match': { list_query[0]: query_params[list_query[0]] } },
+            {
+                '$lookup': {
+                    'from': 'mlst',  
+                    'localField': 'cenmigID', 
+                    'foreignField': 'cenmigID',  
+                    'as': 'mlst'  
+                }
+            },
+            {
+                '$unwind': {'path': '$mlst', 'preserveNullAndEmptyArrays': True} 
+            },
+            {
+                '$project': {
+                    'mlst._id': 0,
+                    '_id': 0,
+                    'mlst.cenmigID': 0 
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'drug_resistance_resfinder',  
+                    'localField': 'cenmigID',  
+                    'foreignField': 'cenmigID', 
+                    'as': 'drug_resistance_resfinder'  
+                }
+            },
+            {
+                '$unwind': {'path': '$drug_resistance_resfinder', 'preserveNullAndEmptyArrays': True} 
+            },
+            {
+                '$project': {
+                    'drug_resistance_resfinder._id': 0,
+                    'drug_resistance_resfinder.cenmigID': 0 
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'point_mutation_pointfinder',  
+                    'localField': 'cenmigID', 
+                    'foreignField': 'cenmigID',
+                    'as': 'point_mutation_pointfinder'  
+                }
+            },
+            {
+                '$unwind': {'path': '$point_mutation_pointfinder', 'preserveNullAndEmptyArrays': True} 
+            },
+            {
+                '$project': {
+                    'point_mutation_pointfinder._id': 0,
+                    'point_mutation_pointfinder.cenmigID': 0 
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'tb_profiler',  
+                    'localField': 'cenmigID', 
+                    'foreignField': 'cenmigID',  
+                    'as': 'tb_profiler'  
+                }
+            },
+            {
+                '$unwind': {'path': '$tb_profiler', 'preserveNullAndEmptyArrays': True} 
+            },
+            {
+                '$project': {
+                    'tb_profiler._id': 0,
+                    'tb_profiler.cenmigID': 0,
+                    # 'tb_profiler.TB_raw_result' :0
+                }
+            }
+            
+        ]
+        result = db.bacteria.aggregate(pipeline)
+        res = {'data': list(result)} 
+    else:
+        return jsonify({"Error!": "Now cant use more than one query"}), 400
+    if not query_params:
+        return jsonify({"Error!": "No query provided for retrieving data"}), 400
+    return jsonify(res)
 
+@app.route('/api/download-seq', methods=['GET'])
+def download_seq():
+    query = request.args
+    if "cenmigID" in query:
+        id_ = query['cenmigID']
+        myquery = {'cenmigID': id_}
+        result_data = mycol.find_one(myquery, {'_id': 0,'cenmigID':1,'file_name':1,})
+        if result_data:
+            if "file_name" in result_data:
+                file_list = result_data['file_name'].split(", ")
+                if len(file_list)==1:
+                    file_data = get_item_from_db(client,file_list[0])
+                    return send_file(BytesIO(file_data), download_name=file_list[0], as_attachment=True)
+                else:
+                    files = []
+                    for i in file_list:
+                        file_data = get_item_from_db(client,i)
+                        files.append((i, file_data))
+                    full_zip_in_memory = generate_zip(files)
+                    return send_file(BytesIO(full_zip_in_memory), download_name="seq_data.zip", as_attachment=True)
+            else:
+                return jsonify({"Error!": "No sequence file!"}), 400
+        else:
+            return jsonify({"Error!": "No cenmigID in database!"}), 400
+    else:
+        return jsonify({"Error!": "No cenmigID key"}), 400
+
+@app.route('/api/metadata/mycobacterium_tuberculosis', methods=['GET'])
+def get_data_mtb():
+    myquery = {'Organism' : { "$regex": "^Mycobacterium" }}
+    query_params = dict(request.args)
+    myquery.update(query_params)
+    result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'DR_Type':1,'Collection_date':1,'Platform':1,'wg_snp_lineage_assignment':1,'Assay_Type':1})) 
+    return jsonify(result_data)
+
+@app.route('/api/metadata/salmonella_enterica', methods=['GET'])
+def get_data_salmo():
+    myquery = {'Organism' : { "$regex": "^Salmonella" }}
+    query_params = dict(request.args)
+    myquery.update(query_params)
+    result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'Assay_Type':1,'Collection_date':1,'Platform':1,'ST':1})) 
+    return jsonify(result_data)
+
+@app.route('/api/metadata/staphylococcus', methods=['GET'])
+def get_data_staphylococcus():
+    myquery = {'Organism' : { "$regex": "^Staphylococcus" }}
+    query_params = dict(request.args)
+    myquery.update(query_params)
+    result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'Assay_Type':1,'Collection_date':1,'Platform':1,'ST':1})) 
+    return jsonify(result_data)
+
+@app.route('/api/metadata/streptococcus_agalactiae', methods=['GET'])
+def get_data_streptococcus_agalactiae():
+    myquery = {'Organism' : { "$regex": "^Streptococcus agalactiae" }}
+    query_params = dict(request.args)
+    myquery.update(query_params)
+    result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'Assay_Type':1,'Collection_date':1,'Platform':1,'ST':1})) 
+    return jsonify(result_data)
+
+@app.route('/api/metadata/campylobacter_jejuni', methods=['GET'])
+def get_data_campylobacter_jejuni():
+    myquery = {'Organism' : { "$regex": "^Campylobacter jejuni" }}
+    query_params = dict(request.args)
+    myquery.update(query_params)
+    result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'Assay_Type':1,'Collection_date':1,'Platform':1,'ST':1})) 
+    return jsonify(result_data)
+
+@app.route('/api/metadata/candida_glabrata', methods=['GET'])
+def get_data_candida_glabrata():
+    myquery = {'Organism' : { "$regex": "^Candida glabrata" }}
+    query_params = dict(request.args)
+    print(query_params)
+    myquery.update(query_params)
+    result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'Assay_Type':1,'Collection_date':1,'Platform':1,'ST':1})) 
+    return jsonify(result_data)
+
+@app.route('/api/metadata/burkholderia_pseudomallei', methods=['GET'])
+def get_data_burkholderia_pseudomallei():
+    myquery = {'Organism' : { "$regex": "^Burkholderia" }}
+    query_params = dict(request.args)
+    print(query_params)
+    myquery.update(query_params)
+    result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'Assay_Type':1,'Collection_date':1,'Platform':1,'ST':1})) 
+    return jsonify(result_data)
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0',debug=True,port='8080')
