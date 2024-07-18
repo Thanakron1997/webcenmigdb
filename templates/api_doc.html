@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CENMIG Database</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css">
+  
+
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg bg-light fixed-top" style="padding-top: 10px; padding-right: 5px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;">
+        <div class="container-fluid">
+          <a class="navbar-brand">CENMIG Database</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNavDropdown">
+            <ul class="navbar-nav">
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="/">Home</a>
+              </li>
+              <!-- <li class="nav-item">
+                <a class="nav-link" href="/search">Search</a>
+              </li> -->
+              <li class="nav-item">
+                <a class="nav-link" href="/download_Data">Download Data</a>
+              </li>
+              <!-- <li class="nav-item">
+                <a class="nav-link" href="/download_sequences">Download Sequences</a>
+              </li> -->
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Bacteria</a>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="/bac_tb">Mycobacterium tuberculosis</a></li>
+                  <li><a class="dropdown-item" href="/bac_salmo">Salmonella enterica</a></li>
+                  <li><a class="dropdown-item" href="/bac_salmo_subsp">Salmonella enterica subsp. enterica serovar</a></li>
+                  <li><a class="dropdown-item" href="/bac_stap">Staphylococcus aureus</a></li>
+                  <li><a class="dropdown-item" href="/bac_strep">Streptococcus agalactiae</a></li>
+                </ul>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/api_doc">API doc</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/help">Help</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+      <main>
+      <br>
+<link rel="stylesheet" href="{{url_for('static', filename='css/hightlightjs-dark.css')}}">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.8.0/highlight.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;1,300&family=Source+Code+Pro:wght@300&display=swap" rel="stylesheet"> 
+<link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}" media="all">
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
+
+<br>
+
+<body class="one-content-column-version">
+    <div class="left-menu">
+        <div class="content-logo">
+            <div class="logo">
+                <span>API Documentation</span>
+            </div>
+        </div>
+        <div class="mobile-menu-closer"></div>
+        <div class="content-menu">
+            <div class="content-infos">
+                <div class="info"><b>Version:</b> 1.0.0</div>
+                <div class="info"><b>Last Updated:</b> 7 July 2024</div>
+            </div>
+            <ul>
+                <li class="scroll-to-link active" data-target="content-get-started">
+                    <a>Get Started</a>
+                </li>
+                <li class="scroll-to-link" data-target="content-get-metadata">
+                    <a>Get Metadata</a>
+                </li>
+                <li class="scroll-to-link" data-target="content-get-sequence">
+                    <a>Get Sequence Data</a>
+                </li>
+                <li class="scroll-to-link" data-target="content-errors">
+                    <a>Errors</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    
+    <div class="content-page">
+        <div class="content">
+            <div class="overflow-hidden content-section" id="content-get-started">
+                <h1>Get started</h1>
+                <p>
+                    The CENMIG API provides Metadata and sequence from cenmigDB.
+                </p>
+                <p>
+                    To use this API, you need an <strong>API key</strong>. Please contact us at <a href="mailto:thanakron.nop@gmail.com">thanakron.nop@gmail.com</a> to get your own API key.
+                </p>
+            </div>
+            <div class="overflow-hidden content-section" id="content-get-metadata">
+                <h2>get metadata</h2>
+                <p>
+                    To get metadata by cenmigID you need to make a POST call to the following url :<br>
+                    <code class="higlighted break-word">http://10.9.63.150:8080/api/metadata/search</code>
+                </p>
+                <p>
+                    Example
+                    <br>
+                    <code class="higlighted break-word">http://10.9.63.44:5000/api/metadata/search?cenmigID=DRR130077</code>
+                </p>
+                <br>
+                <h4>QUERY PARAMETERS</h4>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>secret_key</td>
+                        <td>String</td>
+                        <td>Your API key.</td>
+                    </tr>
+                    <tr>
+                        <td>cenmigID</td>
+                        <td>String</td>
+                        <td>cenmigID to find metadata in cenmigDB.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="overflow-hidden content-section" id="content-get-sequence">
+                <h2>Get Sequence Data</h2>
+                <p>
+                    To get sequence data by cenmigID you need to make a POST call to the following url :<br>
+                    <code class="higlighted break-word">http://10.9.63.44:8080/api/download-seq</code>
+                </p>                    
+                    <p>
+                        Example
+                        <br>
+                        <code class="higlighted break-word">http://10.9.63.44:8080/api/download-seq?cenmigID=IH_347f9a8186ca4d6688217e346790b08c8297aff6</code>
+                    </p>
+                <h4>QUERY PARAMETERS</h4>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>secret_key</td>
+                        <td>String</td>
+                        <td>Your API key.</td>
+                    </tr>
+                    <tr>
+                        <td>cenmigID</td>
+                        <td>String</td>
+                        <td>cenmigID to find metadata in cenmigDB.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="overflow-hidden content-section" id="content-errors">
+                <h2>Errors</h2>
+                <p>
+                    The Westeros API uses the following error codes:
+                </p>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Error Code</th>
+                        <th>Meaning</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>X000</td>
+                        <td>
+                            Some parameters are missing. This error appears when you don't pass every mandatory parameters.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>X001</td>
+                        <td>
+                            Unknown or unvalid <code class="higlighted">secret_key</code>. This error appears if you use an unknow API key or if your API key expired.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>X002</td>
+                        <td>
+                            Unvalid <code class="higlighted">secret_key</code> for this domain. This error appears if you use an API key non specified for your domain. Developper or Universal API keys doesn't have domain checker.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>X003</td>
+                        <td>
+                            Unknown or unvalid user <code class="higlighted">token</code>. This error appears if you use an unknow user <code class="higlighted">token</code> or if the user <code class="higlighted">token</code> expired.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="{{url_for('static', filename='js/script.js')}}""></script>
+    
+</body>
+</html>
