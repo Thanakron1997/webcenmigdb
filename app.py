@@ -301,6 +301,7 @@ def get_data_salmo():
     else:
         myquery = {'Organism' : { "$regex": "^Salmonella" }}
         query_params = dict(request.args)
+        del query_params['api_key']
         myquery.update(query_params)
         result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'Assay_Type':1,'Collection_date':1,'Platform':1,'ST':1})) 
         return jsonify(result_data)
@@ -313,6 +314,7 @@ def get_data_staphylococcus():
     else:
         myquery = {'Organism' : { "$regex": "^Staphylococcus" }}
         query_params = dict(request.args)
+        del query_params['api_key']
         myquery.update(query_params)
         result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'Assay_Type':1,'Collection_date':1,'Platform':1,'ST':1})) 
         return jsonify(result_data)
@@ -325,6 +327,7 @@ def get_data_streptococcus_agalactiae():
     else:
         myquery = {'Organism' : { "$regex": "^Streptococcus agalactiae" }}
         query_params = dict(request.args)
+        del query_params['api_key']
         myquery.update(query_params)
         result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'Assay_Type':1,'Collection_date':1,'Platform':1,'ST':1})) 
         return jsonify(result_data)
@@ -337,6 +340,7 @@ def get_data_campylobacter_jejuni():
     else:
         myquery = {'Organism' : { "$regex": "^Campylobacter jejuni" }}
         query_params = dict(request.args)
+        del query_params['api_key']
         myquery.update(query_params)
         result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'Assay_Type':1,'Collection_date':1,'Platform':1,'ST':1})) 
         return jsonify(result_data)
@@ -349,6 +353,7 @@ def get_data_candida_glabrata():
     else:
         myquery = {'Organism' : { "$regex": "^Candida glabrata" }}
         query_params = dict(request.args)
+        del query_params['api_key']
         myquery.update(query_params)
         result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'Assay_Type':1,'Collection_date':1,'Platform':1,'ST':1})) 
         return jsonify(result_data)
@@ -361,6 +366,7 @@ def get_data_burkholderia_pseudomallei():
     else:
         myquery = {'Organism' : { "$regex": "^Burkholderia" }}
         query_params = dict(request.args)
+        del query_params['api_key']
         myquery.update(query_params)
         result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'Assay_Type':1,'Collection_date':1,'Platform':1,'ST':1})) 
         return jsonify(result_data)
