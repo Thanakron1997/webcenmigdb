@@ -289,6 +289,7 @@ def get_data_mtb():
     else:
         myquery = {'Organism' : { "$regex": "^Mycobacterium" }}
         query_params = dict(request.args)
+        del query_params['api_key']
         myquery.update(query_params)
         result_data = list(mycol.find(myquery, {'_id': 0,'cenmigID':1,'Organism':1,'geo_loc_name_country_fix':1,'DR_Type':1,'Collection_date':1,'Platform':1,'wg_snp_lineage_assignment':1,'Assay_Type':1})) 
         return jsonify(result_data)
